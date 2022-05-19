@@ -71,7 +71,7 @@ spec:
             secretKeyRef:
               key: TELEGRAM_TOKEN
               name: env-vars
-        image: dialectlab/marinade-monitoring-service-devnet:0.1.0
+        image: dialectlab/marinade-monitoring-service:0.1.0
         imagePullPolicy: Always
         name: marinade-monitoring-service-devnet
         resources: {}
