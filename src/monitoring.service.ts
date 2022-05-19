@@ -16,6 +16,9 @@ import { Duration } from 'luxon';
 import { getMarinadeDelayedUnstakeTickets, getMarinadeProvider } from './marinade-api';
 import { BN } from '@project-serum/anchor';
 
+const test_mode = process.env.TEST_MODE;
+const testSubs: string[] = [];
+
 export interface UserDelayedUnstakeTickets {
   subscriber: PublicKey;
   tickets: TicketAccountInfo[];
@@ -112,7 +115,6 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     value: TicketAccountInfo[],
   ): string {
     let message = '';
-    // TODO convert lamports to SOL
     this.logger.log(`Constructing notification message for reedamable ticket:`);
     this.logger.log({ value });
     if (value.length === 1) {
@@ -146,7 +148,7 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     const provider = await getMarinadeProvider();
     const currentEpoch = await provider.connection.getEpochInfo();
     this.logger.log(`Current Epoch is ${currentEpoch.epoch}:`, currentEpoch);
-    // TODO only poll for tickets 30 minutes after current epoch start
+    // TODO confirm this logic: only poll for tickets 30 minutes after current epoch start
     //   otherwise, tickets may not yet be redeemable <link to source>
     if (currentEpoch.slotIndex < 6000) {
       // if slots take ~400ms, then ~4500 slots is 30 min. 6000 slots safe bet?
@@ -155,15 +157,14 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     }
 
     const allMarinadeDelayedUnstakeTickets: TicketAccountInfo[] = await getMarinadeDelayedUnstakeTickets();
-
-    // TODO REMOVE !!! HACK FOR TEST
-    allMarinadeDelayedUnstakeTickets.forEach((ticket) => {
-      if (ticket.beneficiary.toBase58() === "CxzGSruD99TtND6WotPXSEKUVWHgqnzUB8ycA2EBd6SE") {
-        console.log("Found Gabe's ticket!", ticket);
-        console.log("HACKING ticket epoch backwards.")
-        ticket.createdEpoch = ticket.createdEpoch.sub(new BN(1));
-      }
-    });
+    if (test_mode) {
+      allMarinadeDelayedUnstakeTickets.forEach((ticket) => {
+        if (testSubs.findIndex((it) => it === ticket.beneficiary.toBase58()) != -1 ) {
+          console.log("Winding back time.", ticket);
+          ticket.createdEpoch = ticket.createdEpoch.sub(new BN(1));
+        }
+      });
+    }
 
     // only consider subscriber's tickets that have a created epoch of this epoch minus 1 or 2
     const allSubscribersRedeemableTickets = allMarinadeDelayedUnstakeTickets.filter((ticket) => {
