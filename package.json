@@ -1,7 +1,6 @@
 {
-  "name": "@dialectlabs/monitoring-service",
+  "name": "@dialectlabs/marinade-monitoring-service",
   "version": "0.1.0",
-  "description": "A reference implementation of a service running @dialectlabs/monitor.",
   "author": "dialectlabs",
   "private": false,
   "license": "Apache-2.0",
