@@ -126,7 +126,7 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
         '✅ Delayed unstake tickets available to redeem:\n';
       const tickets = value.map((info) => {
         return `Ticket for ${
-          info.lamportsAmount.div(new BN(LAMPORTS_PER_SOL))} SOl.\n`;
+          info.lamportsAmount.div(new BN(LAMPORTS_PER_SOL))} SOL.\n`;
       });
       this.logger.log({ les: tickets });
       message = message.concat(...tickets);
