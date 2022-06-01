@@ -6,8 +6,10 @@ import { ResourceId } from '@dialectlabs/monitor';
 import { TicketAccountInfo } from './monitoring.service';
 
 export async function getMarinadeProvider(): Promise<Provider> {
+  const url = process.env.MARINADE_RPC_URL ?? process.env.RPC_URL ?? 'https://api.devnet.solana.com';
+  console.log('marinade rpc url:', url);
   const connection = new Connection(
-    process.env.MARINADE_RPC_URL ?? 'https://api.devnet.solana.com',
+    url,
     Provider.defaultOptions(),
   );
   
