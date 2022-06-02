@@ -155,11 +155,12 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     // timestamp will be "estimated production time, as Unix timestamp (seconds since the Unix epoch)""
     const slot = await provider.connection.getSlot();
     const timestamp = await provider.connection.getBlockTime(slot);
+    this.logger.log(`Estimated production time of this block since last Unix epoch is ${timestamp} seconds.`);
     if (timestamp === null || timestamp < 1800)  {
       if (timestamp === null) {
         this.logger.warn("getBlockTime returns null for connection: ", provider.connection);
       }
-      // if not 30+ minutes into epoch, just return early with nothing
+      this.logger.log(`We are not 30 minutes into epoch yet. Returning early from getSubscribersDelayedUnstakeTickets().`);
       return Promise.resolve([]);
     }
 
