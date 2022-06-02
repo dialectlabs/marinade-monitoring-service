@@ -15,6 +15,7 @@ import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { Duration } from 'luxon';
 import { getMarinadeDelayedUnstakeTickets, getMarinadeProvider } from './marinade-api';
 import { BN } from '@project-serum/anchor';
+import { time } from 'console';
 
 const test_mode = process.env.TEST_MODE;
 const testSubs: string[] = [];
@@ -150,8 +151,14 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     this.logger.log(`Current Epoch is ${currentEpoch.epoch}:`, currentEpoch);
     // TODO confirm this logic: only poll for tickets 30 minutes after current epoch start
     //   otherwise, tickets may not yet be redeemable <link to source>
-    if (currentEpoch.slotIndex < 6000) {
-      // if slots take ~400ms, then ~4500 slots is 30 min. 6000 slots safe bet?
+    // reference: https://docs.solana.com/developing/clients/jsonrpc-api#getblocktime
+    // timestamp will be "estimated production time, as Unix timestamp (seconds since the Unix epoch)""
+    const slot = await provider.connection.getSlot();
+    const timestamp = await provider.connection.getBlockTime(slot);
+    if (timestamp === null || timestamp < 1800)  {
+      if (timestamp === null) {
+        this.logger.warn("getBlockTime returns null for connection: ", provider.connection);
+      }
       // if not 30+ minutes into epoch, just return early with nothing
       return Promise.resolve([]);
     }
