@@ -147,20 +147,27 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     const data: Promise<SourceData<UserDelayedUnstakeTickets>>[] = [];
     const subscriberToRedeemableTicketsMap: Map<string, TicketAccountInfo[]> = new Map();
     const provider = await getMarinadeProvider();
-    const currentEpoch = await provider.connection.getEpochInfo();
-    this.logger.log(`Current Epoch is ${currentEpoch.epoch}:`, currentEpoch);
-    // TODO confirm this logic: only poll for tickets 30 minutes after current epoch start
-    //   otherwise, tickets may not yet be redeemable <link to source>
-    // reference: https://docs.solana.com/developing/clients/jsonrpc-api#getblocktime
-    // timestamp will be "estimated production time, as Unix timestamp (seconds since the Unix epoch)""
-    const slot = await provider.connection.getSlot();
-    const timestamp = await provider.connection.getBlockTime(slot);
-    this.logger.log(`Estimated production time of this block since last Unix epoch is ${timestamp} seconds.`);
-    if (timestamp === null || timestamp < 1800)  {
-      if (timestamp === null) {
-        this.logger.warn("getBlockTime returns null for connection: ", provider.connection);
-      }
-      this.logger.log(`We are not 30 minutes into epoch yet. Returning early from getSubscribersDelayedUnstakeTickets().`);
+    const currentEpochInfo = await provider.connection.getEpochInfo();
+    this.logger.log(`Current Epoch is ${currentEpochInfo.epoch}:`, currentEpochInfo);
+
+    const currentSlot = await provider.connection.getSlot();
+    this.logger.log(`Current slot in current epoch: ${currentSlot}`);
+    const currentSlotTimestamp = await provider.connection.getBlockTime(currentSlot);
+    this.logger.log(`Unix timestamp of current slot: ${currentSlotTimestamp}`);
+    const epochSchedule = await provider.connection.getEpochSchedule();
+    const firstSlotInCurrEpoch = epochSchedule.getFirstSlotInEpoch(currentEpochInfo.epoch);
+    this.logger.log(`First slot in current epoch: ${firstSlotInCurrEpoch}`);
+    const firstSlotTimestamp = await provider.connection.getBlockTime(firstSlotInCurrEpoch);
+    this.logger.log(`Unix timestamp of first slot: ${firstSlotTimestamp}`);
+    let shouldContinue: boolean = false;
+    if (currentSlotTimestamp && firstSlotTimestamp) {
+      const epochElapsedSeconds = currentSlotTimestamp - firstSlotTimestamp;
+      this.logger.log(``);
+      shouldContinue = (epochElapsedSeconds / 60) > 30;
+      this.logger.log(`Greater than 30 minutes into epoch, will continue with getSubscribersDelayedUnstakeTickets()`);
+    }
+    if (!shouldContinue)  {
+      this.logger.log(`We are not 30 minutes into epoch yet. Returning early from getSubscribersDelayedUnstakeTickets() until sufficient time has elapsed.`);
       return Promise.resolve([]);
     }
 
@@ -177,7 +184,7 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     // only consider subscriber's tickets that have a created epoch of this epoch minus 1 or 2
     const allSubscribersRedeemableTickets = allMarinadeDelayedUnstakeTickets.filter((ticket) => {
       const exists = subscribers.find((sub) => sub.equals(ticket.beneficiary) &&
-      ((currentEpoch.epoch - ticket.createdEpoch.toNumber()) === 1 || (currentEpoch.epoch - ticket.createdEpoch.toNumber()) === 2)
+      ((currentEpochInfo.epoch - ticket.createdEpoch.toNumber()) === 1 || (currentEpochInfo.epoch - ticket.createdEpoch.toNumber()) === 2)
       );
       return (exists);
     }

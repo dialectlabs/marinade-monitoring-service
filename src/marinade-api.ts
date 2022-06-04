@@ -4,6 +4,7 @@ import * as Axios from 'axios';
 import { Provider, Wallet } from '@project-serum/anchor';
 import { ResourceId } from '@dialectlabs/monitor';
 import { TicketAccountInfo } from './monitoring.service';
+import { time } from 'console';
 
 export async function getMarinadeProvider(): Promise<Provider> {
   const url = process.env.MARINADE_RPC_URL ?? process.env.RPC_URL ?? 'https://api.devnet.solana.com';
@@ -41,6 +42,20 @@ export async function getMarinadeDelayedUnstakeTickets(): Promise<TicketAccountI
 }
 
 // (async () => {
+//   const provider = await getMarinadeProvider();
+//   const currentEpochInfo = await provider.connection.getEpochInfo();
+//   const currentSlot = await provider.connection.getSlot();
+//   const currentSlotTimestamp = await provider.connection.getBlockTime(currentSlot);
+//   console.log(currentEpochInfo);
+//   const epochSchedule = await provider.connection.getEpochSchedule();
+//   const firstEpSlot = epochSchedule.getFirstSlotInEpoch(currentEpochInfo.epoch);
+//   console.log(firstEpSlot);
+//   const firstSlotTimestamp = await provider.connection.getBlockTime(firstEpSlot);
+//   console.log(currentSlotTimestamp);
+//   console.log(firstSlotTimestamp);
+//   if (currentSlotTimestamp && firstSlotTimestamp) {
+//     console.log((currentSlotTimestamp - firstSlotTimestamp));
+//   }
 //   // Test marinade SDK
-//   await getDelayedUnstakeTickets();
+//   //await getDelayedUnstakeTickets();
 // })()
