@@ -61,7 +61,7 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
       .defineDataSource<UserDelayedUnstakeTickets>()
       .poll(
         async (subscribers) => this.getSubscribersDelayedUnstakeTickets(subscribers),
-        Duration.fromObject({ seconds: 15 }),
+        Duration.fromObject({ seconds: 60 }),
       )
       .transform<TicketAccountInfo[], TicketAccountInfo[]>({
         keys: ['tickets'],
@@ -155,19 +155,19 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
     const firstSlotInCurrEpoch = epochSchedule.getFirstSlotInEpoch(currentEpochInfo.epoch);
     this.logger.log(`First slot in current epoch: ${firstSlotInCurrEpoch}`);
     const elapsedSlotsInCurrentEpoch = currentSlot - firstSlotInCurrEpoch;
-    const theoretical30MinSlotCount = 5000; // 4500 + small margin for error
-    const minimumEpochsForTicketRedemption = 2;
+    const THEORETICAL_SLOT_DURATION_MS = 400; // 400ms theoretical slot time
+    const WAIT_TIME_IN_MS = 17100000; // 4.75 hours into epoch when bot wait time required
+    const THEORETICAL_SLOTS_TO_WAIT = WAIT_TIME_IN_MS / THEORETICAL_SLOT_DURATION_MS;
+    const MINIMUM_EPOCHS_FOR_TICKET_REDEMPTION = 1;
+
     // Now, we will get all delayed unstake tickets returned by Marinade API.
     //   This API returns any ticket created for any Marinade user (regardless if it is ready to redeem or not).
     //   In the code below, we will filter these tickets for ONLY tickets that are redeemable, and then we
     //   will group them for each subscriber. The array-diff type pipeline will then only track subscriber's
     //   tickets that are new-AND-redeemable.
-    //Note: Delayed unstake tickets are redeemable when epoch has increased by 2, and we are atleast 30 minutes
-    //   into that 2nd epoch (or anytime during a subsequent epoch, like +3, +4, +infinite)
-    // Note: We got these epoch slot data to help determine if a ticket is redeemable or not.
-    //       Based on a theoretical 400ms slot time, we will assume that >= 4500 slots
-    //       is atleast 30 minutes into the current epoch. If slot time slows down,
-    //       (e.g. 700ms) then 4500 slots would still be greater than 30 minutes into epoch.
+    //Note: Delayed unstake tickets are redeemable when epoch has increased by 1, and we are atleast 4.75 hours
+    //   into that next epoch (or anytime during an epoch increased by 2 or more)
+
     const allMarinadeDelayedUnstakeTickets: TicketAccountInfo[] = await getMarinadeDelayedUnstakeTickets();
 
     if (test_mode) {
@@ -179,9 +179,9 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
       });
     }
 
-    // Only monitor subscriber's tickets that have a created epoch of current epoch + 2 or greater.
-    //   if the created epoch is precisely current epoch + 2, we also need to be sure we are atleast
-    //   30 minutes into the current epoch
+    // Only monitor subscriber's tickets that have a created epoch of current epoch + 1 or greater.
+    //   if the created epoch is precisely current epoch + 1, we also need to be sure we are atleast
+    //   4.75 hours into the current epoch
     const allSubscribersRedeemableTickets = allMarinadeDelayedUnstakeTickets.filter((ticket) => {
       let shouldMonitorTicket = false;
       const isSubscribersTicket = subscribers.find((sub) => sub.equals(ticket.beneficiary));
@@ -190,11 +190,11 @@ export class DelayedUnstakeMonitoringService implements OnModuleInit, OnModuleDe
         this.logger.log(`Checking whether it is redeemable or not:`);
         const totalEpochsElapsedSinceTicketCreated = currentEpochInfo.epoch - ticket.createdEpoch.toNumber();
         this.logger.log(`totalEpochsElapsedSinceTicketCreated: ${totalEpochsElapsedSinceTicketCreated}`);
-        this.logger.log(`minimumEpochsForTicketRedemption: ${minimumEpochsForTicketRedemption}`);
+        this.logger.log(`MINIMUM_EPOCHS_FOR_TICKET_REDEMPTION: ${MINIMUM_EPOCHS_FOR_TICKET_REDEMPTION}`);
         this.logger.log(`elapsedSlotsInCurrentEpoch: ${elapsedSlotsInCurrentEpoch}`);
-        this.logger.log(`theoretical30MinSlotCount: ${theoretical30MinSlotCount}`);
-        shouldMonitorTicket = (totalEpochsElapsedSinceTicketCreated > minimumEpochsForTicketRedemption ||
-           (totalEpochsElapsedSinceTicketCreated == minimumEpochsForTicketRedemption && elapsedSlotsInCurrentEpoch >= theoretical30MinSlotCount));
+        this.logger.log(`THEORETICAL_SLOTS_TO_WAIT: ${THEORETICAL_SLOTS_TO_WAIT}`);
+        shouldMonitorTicket = (totalEpochsElapsedSinceTicketCreated > MINIMUM_EPOCHS_FOR_TICKET_REDEMPTION ||
+           (totalEpochsElapsedSinceTicketCreated === MINIMUM_EPOCHS_FOR_TICKET_REDEMPTION && elapsedSlotsInCurrentEpoch >= THEORETICAL_SLOTS_TO_WAIT));
         this.logger.log(`Include this ticket in subscribers monitor array? ${shouldMonitorTicket}`);
       }
       return (shouldMonitorTicket);
