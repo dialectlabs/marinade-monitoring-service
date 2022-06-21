@@ -65,7 +65,7 @@ export class DelayedUnstakeMonitoringService
       .poll(
         async (subscribers) =>
           this.getSubscribersDelayedUnstakeTickets(subscribers),
-        Duration.fromObject({ seconds: 10 }),
+        Duration.fromObject({ seconds: 3600 }),
       )
       .transform<TicketAccountInfo[], TicketAccountInfo[]>({
         keys: ['tickets'],
