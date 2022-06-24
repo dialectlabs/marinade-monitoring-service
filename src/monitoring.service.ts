@@ -13,7 +13,10 @@ import {
 import { DialectConnection } from './dialect-connection';
 import { PublicKey } from '@solana/web3.js';
 import { Duration } from 'luxon';
-import { getMarinadeProvider } from './marinade-api';
+import {
+  getMarinadeDelayedUnstakeTickets,
+  getMarinadeProvider,
+} from './marinade-api';
 import { BN } from '@project-serum/anchor';
 import { format5Dec, LamportsToSol } from './utils';
 import JSBI from 'jsbi';
@@ -33,6 +36,27 @@ export interface TicketAccountInfo {
   ticketDue: Boolean;
   ticketDueDate: Date;
 }
+
+const mockedTest = [
+  {
+    ticketPda: '888877zGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC',
+    stateAddress: new PublicKey('8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'),
+    beneficiary: new PublicKey('DQQq7G4vvuVkSoLzqsrEUqbqC62fjY726BGNA7L6zKRh'),
+    lamportsAmount: new BN(0),
+    createdEpoch: new BN(0),
+    ticketDue: true,
+    ticketDueDate: new Date('2022-06-23T11:53:54.101Z'),
+  },
+  {
+    ticketPda: '97777zGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC',
+    stateAddress: new PublicKey('8szGkuLTAux9XMgZ2vtY39jVSowEcpBfFfD8hXSEqdGC'),
+    beneficiary: new PublicKey('DQQq7G4vvuVkSoLzqsrEUqbqC62fjY726BGNA7L6zKRh'),
+    lamportsAmount: new BN(0),
+    createdEpoch: new BN(0),
+    ticketDue: true,
+    ticketDueDate: new Date('2022-06-23T11:53:54.101Z'),
+  },
+];
 
 @Injectable()
 export class DelayedUnstakeMonitoringService
@@ -65,7 +89,7 @@ export class DelayedUnstakeMonitoringService
       .poll(
         async (subscribers) =>
           this.getSubscribersDelayedUnstakeTickets(subscribers),
-        Duration.fromObject({ seconds: 3600 }),
+        Duration.fromObject({ seconds: 10 }),
       )
       .transform<TicketAccountInfo[], TicketAccountInfo[]>({
         keys: ['tickets'],
@@ -156,24 +180,11 @@ export class DelayedUnstakeMonitoringService
     subscribers: ResourceId[],
   ): Promise<SourceData<UserDelayedUnstakeTickets>[]> {
     this.logger.log(`Polling data for ${subscribers.length} subscriber(s)`);
-
     const data: SourceData<UserDelayedUnstakeTickets>[] = [];
 
-    const provider = await getMarinadeProvider();
-    const marinade = new Marinade(
-      new MarinadeConfig({ connection: provider.connection }),
-    );
+    const allDelayedUnstakedTickets = await getMarinadeDelayedUnstakeTickets();
 
-    const promiseUnstakedTicketsBySubscriber = subscribers.map((subscriber) =>
-      marinade.getDelayedUnstakeTickets(subscriber),
-    );
-
-    const allDelayedUnstakedTicketsMap = await Promise.all(
-      promiseUnstakedTicketsBySubscriber,
-    );
-
-    const allDelayedUnstakedTicket = allDelayedUnstakedTicketsMap
-      .flatMap((map) => Array.from(map.values()))
+    const allDelayedUnstakedTicket = allDelayedUnstakedTickets
       .filter((ticket) => ticket.ticketDue)
       .reduce((owners, ticket) => {
         const ownerPK = ticket.beneficiary.toBase58();
@@ -188,7 +199,11 @@ export class DelayedUnstakeMonitoringService
         groupingKey: subscriber.toBase58(),
         data: {
           subscriber: subscriber,
-          tickets: allDelayedUnstakedTicket[subscriber.toBase58()] || [],
+          tickets:
+            allDelayedUnstakedTicket[subscriber.toBase58()] ||
+            process.env.TEST_MODE
+              ? mockedTest.slice(0, Math.round(Math.random() * Math.max(0, 2)))
+              : [],
         },
       };
       data.push(sourceData);
