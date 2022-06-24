@@ -4,13 +4,10 @@ import {
   Marinade,
   MarinadeConfig,
 } from '@marinade.finance/marinade-ts-sdk';
-import * as Axios from 'axios';
 import { Provider, Wallet } from '@project-serum/anchor';
-import { ResourceId } from '@dialectlabs/monitor';
 import { TicketAccountInfo } from './monitoring.service';
-import { time } from 'console';
 
-export async function getMarinadeProvider(): Promise<Provider> {
+export function getMarinadeProvider(): Provider {
   const url =
     process.env.MARINADE_RPC_URL ??
     process.env.RPC_URL ??
@@ -25,13 +22,14 @@ export async function getMarinadeProvider(): Promise<Provider> {
   );
 }
 
+const provider = getMarinadeProvider();
+const marinade = new Marinade(
+  new MarinadeConfig({ connection: provider.connection }),
+);
+
 export async function getMarinadeDelayedUnstakeTickets(): Promise<
   TicketAccountInfo[]
 > {
-  const provider = await getMarinadeProvider();
-  const marinade = new Marinade(
-    new MarinadeConfig({ connection: provider.connection }),
-  );
   const allDelayedUnstakedTickets = await marinade.getDelayedUnstakeTickets();
 
   console.log(

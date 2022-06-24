@@ -13,14 +13,10 @@ import {
 import { DialectConnection } from './dialect-connection';
 import { PublicKey } from '@solana/web3.js';
 import { Duration } from 'luxon';
-import {
-  getMarinadeDelayedUnstakeTickets,
-  getMarinadeProvider,
-} from './marinade-api';
+import { getMarinadeDelayedUnstakeTickets } from './marinade-api';
 import { BN } from '@project-serum/anchor';
 import { format5Dec, LamportsToSol } from './utils';
 import JSBI from 'jsbi';
-import { Marinade, MarinadeConfig } from '@marinade.finance/marinade-ts-sdk';
 
 export interface UserDelayedUnstakeTickets {
   subscriber: PublicKey;
@@ -89,7 +85,7 @@ export class DelayedUnstakeMonitoringService
       .poll(
         async (subscribers) =>
           this.getSubscribersDelayedUnstakeTickets(subscribers),
-        Duration.fromObject({ seconds: 10 }),
+        Duration.fromObject({ seconds: 3600 }),
       )
       .transform<TicketAccountInfo[], TicketAccountInfo[]>({
         keys: ['tickets'],
