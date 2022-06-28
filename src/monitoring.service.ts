@@ -59,6 +59,7 @@ export class DelayedUnstakeMonitoringService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor(private readonly dialectConnection: DialectConnection) {}
+
   private readonly logger = new Logger(DelayedUnstakeMonitoringService.name);
 
   onModuleInit() {
@@ -195,11 +196,9 @@ export class DelayedUnstakeMonitoringService
         groupingKey: subscriber.toBase58(),
         data: {
           subscriber: subscriber,
-          tickets:
-            allDelayedUnstakedTicket[subscriber.toBase58()] ||
-            process.env.TEST_MODE
-              ? mockedTest.slice(0, Math.round(Math.random() * Math.max(0, 2)))
-              : [],
+          tickets: allDelayedUnstakedTicket[subscriber.toBase58()] ?? [],
+          // process.env.TEST_MODE
+          //   ? mockedTest.slice(0, Math.round(Math.random() * Math.max(0, 2)))
         },
       };
       data.push(sourceData);

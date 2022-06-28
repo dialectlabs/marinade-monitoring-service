@@ -666,10 +666,10 @@
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
 
-"@marinade.finance/marinade-ts-sdk@^3.0.0":
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/@marinade.finance/marinade-ts-sdk/-/marinade-ts-sdk-3.0.0.tgz#306a99a2f82107c96101cad2bf79b3859d555f69"
-  integrity sha512-Ip/U+Yy8fP+FuY09raZOYLew/eSrL09Dxm79e5gwCv58h7TcvdtXOSzh6cLOxHqeaBPsyffMc+pvoUsFcw+WWA==
+"@marinade.finance/marinade-ts-sdk@^3.1.0":
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/@marinade.finance/marinade-ts-sdk/-/marinade-ts-sdk-3.1.0.tgz#bf69e9eb39cb2bd95d221230f0bd4096e447c01a"
+  integrity sha512-TsAFeF7PRrZiHc8vUI+B0Hcf2VG5HwgPEG41DmEBLXpGrktjPRl7tOTd4o7Fy1aIAFaNIsIxnQNu1GUAwGZLyQ==
   dependencies:
     "@project-serum/anchor" "^0.18.2"
     "@solana/spl-token" "^0.1.8"
@@ -4009,6 +4009,11 @@ js-yaml@^4.1.0:
   integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
   dependencies:
     argparse "^2.0.1"
+
+jsbi@^4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/jsbi/-/jsbi-4.3.0.tgz#b54ee074fb6fcbc00619559305c8f7e912b04741"
+  integrity sha512-SnZNcinB4RIcnEyZqFPdGPVgrg2AcnykiBy0sHVJQKHYeaLUvi3Exj+iaPpLnFVkDPZIV4U0yvgC9/R4uEAZ9g==
 
 jsdom@^16.6.0:
   version "16.7.0"
