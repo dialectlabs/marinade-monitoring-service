@@ -10,13 +10,13 @@ import {
   ResourceId,
   SourceData,
 } from '@dialectlabs/monitor';
-import { DialectConnection } from './dialect-connection';
 import { PublicKey } from '@solana/web3.js';
 import { Duration } from 'luxon';
 import { getMarinadeDelayedUnstakeTickets } from './marinade-api';
 import { BN } from '@project-serum/anchor';
 import { format5Dec, LamportsToSol } from './utils';
 import JSBI from 'jsbi';
+import { DialectSdk } from './dialect-sdk';
 
 export interface UserDelayedUnstakeTickets {
   subscriber: PublicKey;
@@ -58,29 +58,14 @@ const mockedTest = [
 export class DelayedUnstakeMonitoringService
   implements OnModuleInit, OnModuleDestroy
 {
-  constructor(private readonly dialectConnection: DialectConnection) {}
+  constructor(private readonly sdk: DialectSdk) {}
 
   private readonly logger = new Logger(DelayedUnstakeMonitoringService.name);
 
   onModuleInit() {
     const delayedUnstakeMonitor = Monitors.builder({
-      monitorKeypair: this.dialectConnection.getKeypair(),
-      dialectProgram: this.dialectConnection.getProgram(),
-      sinks: {
-        sms: {
-          twilioUsername: process.env.TWILIO_ACCOUNT_SID!,
-          twilioPassword: process.env.TWILIO_AUTH_TOKEN!,
-          senderSmsNumber: process.env.TWILIO_SMS_SENDER!,
-        },
-        email: {
-          apiToken: process.env.SENDGRID_KEY!,
-          senderEmail: process.env.SENDGRID_EMAIL!,
-        },
-        telegram: {
-          telegramBotToken: process.env.TELEGRAM_TOKEN!,
-        },
-      },
-      web2SubscriberRepositoryUrl: process.env.WEB2_SUBSCRIBER_SERVICE_BASE_URL,
+      sdk: this.sdk,
+      subscribersCacheTTL: Duration.fromObject({ minute: 5 }),
     })
       .defineDataSource<UserDelayedUnstakeTickets>()
       .poll(
@@ -93,6 +78,18 @@ export class DelayedUnstakeMonitoringService
         pipelines: [Pipelines.added((t1, t2) => t1.ticketPda === t2.ticketPda)],
       })
       .notify()
+      .dialectSdk(
+        (adapter) => {
+          return {
+            title: '', // NOTE: 'Marinade: ' prepended in data-service
+            message: this.constructDelayedUnstakeTicketsRedeemableMessage(adapter.value),
+          };
+        },
+        {
+          dispatch: 'unicast',
+          to: ({ origin }) => origin.subscriber,
+        },
+      )
       .dialectThread(
         ({ value }) => ({
           message: this.constructDelayedUnstakeTicketsRedeemableMessage(value),
@@ -104,39 +101,6 @@ export class DelayedUnstakeMonitoringService
             return origin.subscriber;
           },
         },
-      )
-      .telegram(
-        ({ value }) => {
-          const message: string =
-            `🥩 Marinade: ` +
-            this.constructDelayedUnstakeTicketsRedeemableMessage(value);
-          return {
-            body: message,
-          };
-        },
-        { dispatch: 'unicast', to: ({ origin }) => origin.subscriber },
-      )
-      .sms(
-        ({ value }) => {
-          const message: string =
-            `🥩 Marinade: ` +
-            this.constructDelayedUnstakeTicketsRedeemableMessage(value);
-          return {
-            body: message,
-          };
-        },
-        { dispatch: 'unicast', to: ({ origin }) => origin.subscriber },
-      )
-      .email(
-        ({ value }) => {
-          const message: string =
-            this.constructDelayedUnstakeTicketsRedeemableMessage(value);
-          return {
-            subject: '🥩 Marinade: ✅ Delayed Unstake Ticket(s) Redeemable',
-            text: message,
-          };
-        },
-        { dispatch: 'unicast', to: ({ origin }) => origin.subscriber },
       )
       .and()
       .build();
