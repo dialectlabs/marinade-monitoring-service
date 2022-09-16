@@ -9,9 +9,7 @@ import { TicketAccountInfo } from './monitoring.service';
 
 export function getMarinadeProvider(): Provider {
   const url =
-    process.env.MARINADE_RPC_URL ??
-    process.env.RPC_URL ??
-    'https://api.devnet.solana.com';
+    process.env.DIALECT_SDK_SOLANA_RPC_URL!;
   console.log('marinade rpc url:', url);
   const connection = new Connection(url);
 
@@ -33,7 +31,7 @@ export async function getMarinadeDelayedUnstakeTickets(): Promise<
   const allDelayedUnstakedTickets = await marinade.getDelayedUnstakeTickets();
 
   console.log(
-    `Found total ${allDelayedUnstakedTickets.size} delayed unstaked tickets on Marinade (${process.env.MARINADE_RPC_URL}).`,
+    `Found total ${allDelayedUnstakedTickets.size} delayed unstaked tickets on Marinade (RPC URL: ${process.env.DIALECT_SDK_SOLANA_RPC_URL}).`,
   );
   const ret: TicketAccountInfo[] = Array.from(
     allDelayedUnstakedTickets,
@@ -55,20 +53,25 @@ export async function getMarinadeDelayedUnstakeTickets(): Promise<
 }
 
 // (async () => {
-//   const provider = await getMarinadeProvider();
-//   const currentEpochInfo = await provider.connection.getEpochInfo();
-//   const currentSlot = await provider.connection.getSlot();
-//   const currentSlotTimestamp = await provider.connection.getBlockTime(currentSlot);
-//   console.log(currentEpochInfo);
-//   const epochSchedule = await provider.connection.getEpochSchedule();
-//   const firstEpSlot = epochSchedule.getFirstSlotInEpoch(currentEpochInfo.epoch);
-//   console.log(firstEpSlot);
-//   const firstSlotTimestamp = await provider.connection.getBlockTime(firstEpSlot);
-//   console.log(currentSlotTimestamp);
-//   console.log(firstSlotTimestamp);
-//   if (currentSlotTimestamp && firstSlotTimestamp) {
-//     console.log((currentSlotTimestamp - firstSlotTimestamp));
-//   }
+//   // const provider = await getMarinadeProvider();
+//   // const currentEpochInfo = await provider.connection.getEpochInfo();
+//   // const currentSlot = await provider.connection.getSlot();
+//   // const currentSlotTimestamp = await provider.connection.getBlockTime(currentSlot);
+//   // console.log(currentEpochInfo);
+//   // const epochSchedule = await provider.connection.getEpochSchedule();
+//   // const firstEpSlot = epochSchedule.getFirstSlotInEpoch(currentEpochInfo.epoch);
+//   // console.log(firstEpSlot);
+//   // const firstSlotTimestamp = await provider.connection.getBlockTime(firstEpSlot);
+//   // console.log(currentSlotTimestamp);
+//   // console.log(firstSlotTimestamp);
+//   // if (currentSlotTimestamp && firstSlotTimestamp) {
+//   //   console.log((currentSlotTimestamp - firstSlotTimestamp));
+//   // }
+
 //   // Test marinade SDK
-//   //await getDelayedUnstakeTickets();
+//   let ret = await getMarinadeDelayedUnstakeTickets();
+//   console.log(ret);
+//   console.log(ret.find(it => {
+//     return it.beneficiary.equals(new PublicKey('CxzGSruD99TtND6WotPXSEKUVWHgqnzUB8ycA2EBd6SE'));
+//   }));
 // })()
