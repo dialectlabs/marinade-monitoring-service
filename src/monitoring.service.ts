@@ -77,7 +77,11 @@ export class DelayedUnstakeMonitoringService
         keys: ['tickets'],
         pipelines: [Pipelines.added((t1, t2) => t1.ticketPda === t2.ticketPda)],
       })
-      .notify()
+      .notify({
+        type: {
+          id: '7434ee971-44ad-4021-98fe-3140a627bca8',
+        },
+      })
       .dialectSdk(
         (adapter) => {
           return {
