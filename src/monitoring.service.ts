@@ -85,7 +85,7 @@ export class DelayedUnstakeMonitoringService
       .dialectSdk(
         (adapter) => {
           return {
-            title: '', // NOTE: 'Marinade: ' prepended in data-service
+            title: 'Delayed Unstake Ticket Available',
             message: this.constructDelayedUnstakeTicketsRedeemableMessage(adapter.value),
           };
         },
