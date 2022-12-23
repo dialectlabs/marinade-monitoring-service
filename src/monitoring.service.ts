@@ -16,7 +16,8 @@ import { getMarinadeDelayedUnstakeTickets } from './marinade-api';
 import { BN } from '@project-serum/anchor';
 import { format5Dec, LamportsToSol } from './utils';
 import JSBI from 'jsbi';
-import { DialectSdk } from './dialect-sdk';
+import { DialectSdk } from '@dialectlabs/sdk';
+import { Solana } from '@dialectlabs/blockchain-sdk-solana';
 
 export interface UserDelayedUnstakeTickets {
   subscriber: PublicKey;
@@ -29,7 +30,7 @@ export interface TicketAccountInfo {
   beneficiary: PublicKey;
   lamportsAmount: BN;
   createdEpoch: BN;
-  ticketDue: Boolean;
+  ticketDue: boolean;
   ticketDueDate: Date;
 }
 
@@ -58,7 +59,7 @@ const mockedTest = [
 export class DelayedUnstakeMonitoringService
   implements OnModuleInit, OnModuleDestroy
 {
-  constructor(private readonly sdk: DialectSdk) {}
+  constructor(private readonly sdk: DialectSdk<Solana>) {}
 
   private readonly logger = new Logger(DelayedUnstakeMonitoringService.name);
 
@@ -71,7 +72,7 @@ export class DelayedUnstakeMonitoringService
       .poll(
         async (subscribers) =>
           this.getSubscribersDelayedUnstakeTickets(subscribers),
-        Duration.fromObject({ seconds: 3600 }),
+        Duration.fromObject({ hours: 1 }),
       )
       .transform<TicketAccountInfo[], TicketAccountInfo[]>({
         keys: ['tickets'],
@@ -79,14 +80,16 @@ export class DelayedUnstakeMonitoringService
       })
       .notify({
         type: {
-          id: '7434ee971-44ad-4021-98fe-3140a627bca8',
+          id: 'marinade_notifications',
         },
       })
       .dialectSdk(
         (adapter) => {
           return {
             title: 'Delayed Unstake Ticket Available',
-            message: this.constructDelayedUnstakeTicketsRedeemableMessage(adapter.value),
+            message: this.constructDelayedUnstakeTicketsRedeemableMessage(
+              adapter.value,
+            ),
           };
         },
         {
