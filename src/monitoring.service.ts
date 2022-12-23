@@ -80,7 +80,7 @@ export class DelayedUnstakeMonitoringService
       })
       .notify({
         type: {
-          id: '7434ee971-44ad-4021-98fe-3140a627bca8',
+          id: 'marinade_notifications',
         },
       })
       .dialectSdk(
