@@ -1,15 +1,10 @@
-import { PublicKey, EpochSchedule, Connection, Keypair } from '@solana/web3.js';
-import {
-  BN,
-  Marinade,
-  MarinadeConfig,
-} from '@marinade.finance/marinade-ts-sdk';
+import { Connection, Keypair } from '@solana/web3.js';
+import { Marinade, MarinadeConfig } from '@marinade.finance/marinade-ts-sdk';
 import { Provider, Wallet } from '@project-serum/anchor';
 import { TicketAccountInfo } from './monitoring.service';
 
 export function getMarinadeProvider(): Provider {
-  const url =
-    process.env.DIALECT_SDK_SOLANA_RPC_URL!;
+  const url = process.env.DIALECT_SDK_SOLANA_RPC_URL!;
   console.log('marinade rpc url:', url);
   const connection = new Connection(url);
 
