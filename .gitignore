@@ -1,8 +1,7 @@
 # compiled output
 /dist
 /node_modules
-
-/test/start-server.sh
+/prisma/node_modules
 
 # Logs
 logs
@@ -34,4 +33,9 @@ lerna-debug.log*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
-!.vscode/extensions.json
+!.vscode/extensions.json!/prisma/node_modules/
+
+/.env.prod
+/.env.sbx
+/.env.dev
+/.env.local

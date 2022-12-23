@@ -4,6 +4,10 @@ node_modules
 dist
 deployment
 .git
-.env
+/.env
+/.env.prod
+/.env.sbx
+/.env.dev
+/.env.local
 npm-debug.log
 env-dev-fb-admin-key.json
